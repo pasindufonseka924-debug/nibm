@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Aapasu — Bottle Return Rewards</title>
+<title>NIBM Bottle Return — Rewards</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -83,9 +83,11 @@
   }
   .brand .name{
     font-family:'Fraunces',serif;
-    font-size:20px;
+    font-size:15.5px;
     font-weight:600;
-    letter-spacing:0.2px;
+    letter-spacing:0.1px;
+    line-height:1.2;
+    max-width:150px;
   }
   .brand .name small{
     display:block;
@@ -157,6 +159,7 @@
   .progress-fill{
     height:100%; border-radius:99px;
     background:linear-gradient(90deg, var(--teal), var(--teal-soft));
+    transition: width .5s ease;
   }
   .progress-meta{
     display:flex; justify-content:space-between; margin-top:9px;
@@ -250,6 +253,7 @@
     border-radius:16px;
     padding:14px 16px;
     margin-bottom:10px;
+    transition: opacity .3s ease;
   }
   .coupon .pct{
     font-family:'Fraunces',serif;
@@ -339,7 +343,84 @@
   .lb-row .nm small{ display:block; font-size:10.5px; color:var(--sand-dim); font-weight:400; }
   .lb-row .pt{ font-size:13px; font-weight:700; color:var(--mango); }
 
-  /* ---------- Bottom nav ---------- */
+  /* ---------- Scan screen ---------- */
+  .scan-frame{
+    margin-top:14px;
+    position:relative;
+    width:100%;
+    aspect-ratio: 3/4;
+    border-radius:22px;
+    overflow:hidden;
+    background:#02100D;
+    border:1px solid var(--line);
+  }
+  .scan-frame video{
+    width:100%; height:100%; object-fit:cover;
+    display:block;
+  }
+  .scan-frame .reticle{
+    position:absolute; inset:14% 14%;
+    border:2px solid rgba(255,180,77,0.8);
+    border-radius:18px;
+    box-shadow: 0 0 0 999px rgba(2,16,13,0.35);
+  }
+  .scan-frame .scanline{
+    position:absolute; left:14%; right:14%; top:14%;
+    height:2px;
+    background:linear-gradient(90deg, transparent, var(--mango), transparent);
+    animation: scanmove 1.8s ease-in-out infinite;
+  }
+  @keyframes scanmove{
+    0%{ top:14%; } 50%{ top:82%; } 100%{ top:14%; }
+  }
+  .scan-status{
+    text-align:center; font-size:12.5px; color:var(--sand-dim);
+    margin-top:14px; min-height:18px;
+  }
+  .scan-actions{
+    display:flex; gap:10px; margin-top:14px;
+  }
+  .btn-mango{
+    flex:1;
+    background:linear-gradient(155deg, var(--mango), var(--mango-deep));
+    color:#3A2400; border:none; border-radius:14px;
+    padding:13px 0; font-size:13.5px; font-weight:700;
+  }
+  .btn-mango:active{ transform:scale(0.98); }
+  .btn-ghost{
+    flex:none;
+    background:var(--lagoon-panel);
+    border:1px solid var(--line);
+    color:var(--sand-dim);
+    border-radius:14px;
+    padding:13px 16px; font-size:13.5px; font-weight:600;
+  }
+
+  .scan-result{
+    display:none;
+    margin-top:14px;
+    text-align:center;
+    background:var(--lagoon-panel);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:30px 20px 24px;
+  }
+  .scan-result .check{
+    width:58px; height:58px; border-radius:50%;
+    background:rgba(31,161,135,0.18);
+    border:2px solid var(--teal);
+    display:flex; align-items:center; justify-content:center;
+    margin:0 auto 14px;
+    font-size:26px; color:var(--teal-soft);
+  }
+  .scan-result .rtitle{ font-size:16px; font-weight:600; }
+  .scan-result .rcode{ font-size:12px; color:var(--sand-dim); margin-top:4px; }
+  .scan-result .rpoints{
+    font-family:'Fraunces',serif; font-size:30px; font-weight:700;
+    color:var(--mango); margin:14px 0 4px;
+  }
+
+  /* ---------- Bottom nav + FAB ---------- */
   .tabbar{
     position:fixed; bottom:0; left:50%; transform:translateX(-50%);
     width:100%; max-width:430px;
@@ -349,6 +430,7 @@
     border-top:1px solid var(--line);
     padding:10px 10px calc(10px + env(safe-area-inset-bottom));
     gap:4px;
+    align-items:flex-start;
   }
   .tab{
     flex:1; border:none; background:transparent; color:var(--sand-dim);
@@ -359,6 +441,19 @@
   .tab.on{ color:var(--mango); }
   .tab.on .ic-wrap{ background:rgba(255,180,77,0.14); }
   .tab .ic-wrap{ width:34px; height:26px; border-radius:9px; display:flex; align-items:center; justify-content:center; }
+
+  .fab-scan{
+    position:fixed;
+    bottom:52px; left:50%; transform:translateX(-50%);
+    width:58px; height:58px; border-radius:50%;
+    background:linear-gradient(155deg, var(--mango), var(--mango-deep));
+    border:4px solid var(--lagoon-deep);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 6px 16px rgba(0,0,0,0.45);
+    z-index:5;
+  }
+  .fab-scan svg{ width:24px; height:24px; }
+  .fab-scan:active{ transform:translateX(-50%) scale(0.94); }
 
   ::-webkit-scrollbar{ display:none; }
 
@@ -372,10 +467,10 @@
 
   <div class="topbar">
     <div class="brand">
-      <div class="mark">A</div>
-      <div class="name">Aapasu<small>Bottle Return Rewards</small></div>
+      <div class="mark">N</div>
+      <div class="name">NIBM Bottle Return<small>Rewards for a Greener Campus</small></div>
     </div>
-    <div class="points-chip"><span class="dot">340</span> points</div>
+    <div class="points-chip"><span class="dot" id="pts-topbar">340</span> points</div>
   </div>
 
   <div class="screens">
@@ -384,9 +479,9 @@
     <section class="screen active" id="screen-home">
       <div class="card-token">
         <div class="label">Your points balance</div>
-        <div class="amount">340 <span>points</span></div>
-        <div class="sub"><b style="color:var(--mango)">160</b> points to go until 10% off</div>
-        <div class="progress-track"><div class="progress-fill" style="width:68%"></div></div>
+        <div class="amount" id="pts-home">340 <span>points</span></div>
+        <div class="sub" id="pts-home-sub"><b style="color:var(--mango)">160</b> points to go until 10% off</div>
+        <div class="progress-track"><div class="progress-fill" id="progress-home" style="width:68%"></div></div>
         <div class="progress-meta"><span>250 · 5% unlocked</span><span><b>500</b> · 10%</span></div>
       </div>
 
@@ -394,6 +489,12 @@
         <h2>What you can do</h2>
       </div>
       <div class="tile-row">
+        <button class="tile" onclick="showScreen('scan')">
+          <div class="ic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#66CDB8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="12" rx="2"/><path d="M7 7V5a1 1 0 0 1 1-1h1"/><path d="M17 7V5a1 1 0 0 0-1-1h-1"/><path d="M7 19v0a1 1 0 0 0 1 1h1"/><path d="M17 19v0a1 1 0 0 1-1 1h-1"/><circle cx="12" cy="13" r="3"/></svg>
+          </div>
+          <div class="t">Scan<br>Bottle</div>
+        </button>
         <button class="tile" onclick="showScreen('map')">
           <div class="ic">
             <svg viewBox="0 0 24 24" fill="none" stroke="#66CDB8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20l-6-3V4l6 3 6-3 6 3v13l-6-3-6 3z"/><path d="M9 4v13"/><path d="M15 7v13"/></svg>
@@ -405,12 +506,6 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="#66CDB8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/><circle cx="16" cy="14.5" r="1.2" fill="#66CDB8" stroke="none"/></svg>
           </div>
           <div class="t">My<br>Wallet</div>
-        </button>
-        <button class="tile" onclick="showScreen('leaderboard')">
-          <div class="ic">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#66CDB8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v6a5 5 0 0 1-10 0V4z"/><path d="M7 6H4a3 3 0 0 0 3 4"/><path d="M17 6h3a3 3 0 0 1-3 4"/></svg>
-          </div>
-          <div class="t">Leader<br>board</div>
         </button>
       </div>
 
@@ -424,7 +519,7 @@
         </div>
         <div class="how-item">
           <div class="n">2</div>
-          <p>Scan the bottle's QR code in-store to add <b>points</b> to your account instantly.</p>
+          <p>Scan the bottle's barcode / QR in the app to add <b>points</b> to your account instantly.</p>
         </div>
         <div class="how-item">
           <div class="n">3</div>
@@ -439,7 +534,7 @@
         <h2>Shops accepting bottle returns</h2>
       </div>
       <div id="map"></div>
-      <div class="section-title"><h2 style="font-size:15px;">Nearby shops</h2><span class="hint">Negombo</span></div>
+      <div class="section-title"><h2 style="font-size:15px;">Nearby shops</h2><span class="hint">Kandy District</span></div>
       <div id="shop-list"></div>
     </section>
 
@@ -447,14 +542,14 @@
     <section class="screen" id="screen-wallet">
       <div class="card-token" style="margin-top:14px;">
         <div class="label">Wallet balance</div>
-        <div class="amount">340 <span>points</span></div>
-        <div class="sub">You typically earn 10 points per bottle returned</div>
-        <div class="progress-track"><div class="progress-fill" style="width:68%"></div></div>
+        <div class="amount" id="pts-wallet">340 <span>points</span></div>
+        <div class="sub">You typically earn 10 points per bottle scanned</div>
+        <div class="progress-track"><div class="progress-fill" id="progress-wallet" style="width:68%"></div></div>
         <div class="progress-meta"><span>250 · 5%</span><span><b>500</b> · 10%</span></div>
       </div>
 
       <div class="section-title"><h2>Your discounts</h2></div>
-      <div class="coupon unlocked">
+      <div class="coupon unlocked" id="coupon-5">
         <div class="pct">5%</div>
         <div class="txt">
           <div class="t">Off a new bottled water pack</div>
@@ -462,7 +557,7 @@
         </div>
         <div class="status">USE NOW</div>
       </div>
-      <div class="coupon locked">
+      <div class="coupon locked" id="coupon-10">
         <div class="pct">10%</div>
         <div class="txt">
           <div class="t">Off any product from the same brand</div>
@@ -470,7 +565,7 @@
         </div>
         <div class="status">LOCKED</div>
       </div>
-      <div class="coupon locked">
+      <div class="coupon locked" id="coupon-20">
         <div class="pct">20%</div>
         <div class="txt">
           <div class="t">Off a refill pack + bottle bundle</div>
@@ -480,11 +575,11 @@
       </div>
 
       <div class="section-title"><h2>Recent activity</h2></div>
-      <div class="how-list" style="background:var(--lagoon-panel); border:1px solid var(--line); border-radius:16px; padding:4px 14px;">
+      <div class="how-list" id="history-list" style="background:var(--lagoon-panel); border:1px solid var(--line); border-radius:16px; padding:4px 14px;">
         <div class="history-row">
           <div class="ic">♻️</div>
           <div>
-            <div class="t">Cargills Food City — Negombo</div>
+            <div class="t">Cargills Food City — Kandy City Centre</div>
             <div class="d">2 bottles · Today</div>
           </div>
           <div class="pt">+20</div>
@@ -500,7 +595,7 @@
         <div class="history-row">
           <div class="ic">♻️</div>
           <div>
-            <div class="t">Keells Super — Negombo</div>
+            <div class="t">Keells Super — Peradeniya Road</div>
             <div class="d">5 bottles · 4 days ago</div>
           </div>
           <div class="pt">+50</div>
@@ -508,10 +603,41 @@
         <div class="history-row">
           <div class="ic">♻️</div>
           <div>
-            <div class="t">Arpico Super Centre — Negombo</div>
+            <div class="t">Arpico Super Centre — Katugastota Road</div>
             <div class="d">3 bottles · A week ago</div>
           </div>
           <div class="pt">+30</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ SCAN ============ -->
+    <section class="screen" id="screen-scan">
+      <div class="section-title" style="margin-top:14px;">
+        <h2>Scan a bottle</h2>
+      </div>
+
+      <div id="scan-live">
+        <div class="scan-frame">
+          <video id="scan-video" muted playsinline autoplay></video>
+          <div class="reticle"></div>
+          <div class="scanline"></div>
+        </div>
+        <div class="scan-status" id="scan-status">Tap "Start Camera" to begin</div>
+        <div class="scan-actions">
+          <button class="btn-mango" onclick="startScan()">Start Camera</button>
+          <button class="btn-ghost" onclick="simulateScan()">Simulate</button>
+        </div>
+      </div>
+
+      <div class="scan-result" id="scan-result">
+        <div class="check">✓</div>
+        <div class="rtitle">Bottle verified</div>
+        <div class="rcode" id="scan-code">—</div>
+        <div class="rpoints" id="scan-points">+10</div>
+        <div class="scan-actions">
+          <button class="btn-mango" onclick="resetScan()">Scan another</button>
+          <button class="btn-ghost" onclick="showScreen('wallet')">View Wallet</button>
         </div>
       </div>
     </section>
@@ -525,13 +651,13 @@
       </div>
 
       <div class="podium">
-        <div class="p-slot second"><div class="av">D</div><div class="nm">Dilani</div><div class="pt">410</div><div class="bar"></div></div>
-        <div class="p-slot first"><div class="av">K</div><div class="nm">Kasun</div><div class="pt">520</div><div class="bar"></div></div>
-        <div class="p-slot third"><div class="av">C</div><div class="nm">Chamara</div><div class="pt">375</div><div class="bar"></div></div>
+        <div class="p-slot second"><div class="av">S</div><div class="nm">Sadu</div><div class="pt">410</div><div class="bar"></div></div>
+        <div class="p-slot first"><div class="av">P</div><div class="nm">Piyu</div><div class="pt">520</div><div class="bar"></div></div>
+        <div class="p-slot third"><div class="av">P</div><div class="nm">Pavinya</div><div class="pt">375</div><div class="bar"></div></div>
       </div>
 
       <div style="margin-top:18px;">
-        <div class="lb-row me"><div class="rk">4</div><div class="av">Y</div><div class="nm">You</div><div class="pt">340</div></div>
+        <div class="lb-row me"><div class="rk">4</div><div class="av">Y</div><div class="nm">You</div><div class="pt" id="pts-lb">340</div></div>
         <div class="lb-row"><div class="rk">5</div><div class="av">N</div><div class="nm">Nadeeshani</div><div class="pt">298</div></div>
         <div class="lb-row"><div class="rk">6</div><div class="av">R</div><div class="nm">Ruwan</div><div class="pt">210</div></div>
         <div class="lb-row"><div class="rk">7</div><div class="av">T</div><div class="nm">Tharika</div><div class="pt">175</div></div>
@@ -540,6 +666,10 @@
     </section>
 
   </div>
+
+  <button class="fab-scan" onclick="showScreen('scan')" aria-label="Scan bottle">
+    <svg viewBox="0 0 24 24" fill="none" stroke="#3A2400" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="12" rx="2"/><circle cx="12" cy="13" r="3"/></svg>
+  </button>
 
   <div class="tabbar">
     <button class="tab on" id="tab-home" onclick="showScreen('home')">
@@ -550,6 +680,7 @@
       <div class="ic-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20l-6-3V4l6 3 6-3 6 3v13l-6-3-6 3z"/></svg></div>
       Map
     </button>
+    <div style="flex:1"></div>
     <button class="tab" id="tab-wallet" onclick="showScreen('wallet')">
       <div class="ic-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/></svg></div>
       Wallet
@@ -563,19 +694,27 @@
 </div>
 
 <script>
+  // ---------- state ----------
+  let balance = 340;
+
   // ---------- screen switching ----------
   let mapInited = false;
   function showScreen(name){
     document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
     document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
     document.getElementById('screen-'+name).classList.add('active');
-    document.getElementById('tab-'+name).classList.add('on');
+    const tabEl = document.getElementById('tab-'+name);
+    if(tabEl) tabEl.classList.add('on');
+
     if(name==='map' && !mapInited){
       initMap();
       mapInited = true;
     }
     if(name==='map' && mapInited){
       setTimeout(()=>{ if(window._leafletMap) window._leafletMap.invalidateSize(); }, 80);
+    }
+    if(name!=='scan'){
+      stopScan();
     }
   }
 
@@ -584,17 +723,62 @@
     document.getElementById('btn-global').classList.toggle('on', v==='global');
   }
 
-  // ---------- shops mock data (Negombo, real chains / real streets) ----------
+  // ---------- points / UI refresh ----------
+  function refreshUI(){
+    document.getElementById('pts-topbar').textContent = balance;
+    document.getElementById('pts-home').innerHTML = balance + ' <span>points</span>';
+    document.getElementById('pts-wallet').innerHTML = balance + ' <span>points</span>';
+    document.getElementById('pts-lb').textContent = balance;
+
+    const pct500 = Math.max(0, Math.min(100, (balance/500)*100));
+    document.getElementById('progress-home').style.width = pct500 + '%';
+    document.getElementById('progress-wallet').style.width = pct500 + '%';
+
+    if(balance >= 500){
+      document.getElementById('pts-home-sub').innerHTML = 'You\'ve unlocked the <b style="color:var(--mango)">10% off</b> coupon';
+    } else {
+      document.getElementById('pts-home-sub').innerHTML = '<b style="color:var(--mango)">'+(500-balance)+'</b> points to go until 10% off';
+    }
+
+    setCoupon('coupon-10', balance>=500, (500-balance)+' more points to unlock', '10% off any product from the same brand');
+    setCoupon('coupon-20', balance>=1000, (1000-balance)+' more points to unlock', '20% off a refill pack + bottle bundle');
+  }
+
+  function setCoupon(id, unlocked, lockedText, unlockedText){
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.classList.toggle('unlocked', unlocked);
+    el.classList.toggle('locked', !unlocked);
+    el.querySelector('.status').textContent = unlocked ? 'USE NOW' : 'LOCKED';
+    el.querySelector('.s').textContent = unlocked ? unlockedText.replace(/^\d+% /,'Unlocked · ') : lockedText;
+  }
+
+  function addHistoryEntry(label, pts){
+    const list = document.getElementById('history-list');
+    const row = document.createElement('div');
+    row.className = 'history-row';
+    row.innerHTML = `
+      <div class="ic">♻️</div>
+      <div>
+        <div class="t">${label}</div>
+        <div class="d">Scanned just now</div>
+      </div>
+      <div class="pt">+${pts}</div>
+    `;
+    list.insertBefore(row, list.firstChild);
+  }
+
+  // ---------- shops mock data (Kandy District, real chains / real streets) ----------
   const shops = [
-    { name:"Cargills Food City — Negombo", addr:"Sea Street, Negombo", lat:7.2094, lng:79.8384, dist:"0.6 km" },
-    { name:"Keells Super — Negombo", addr:"Colombo Road, Negombo", lat:7.2032, lng:79.8412, dist:"1.2 km" },
-    { name:"Arpico Super Centre — Negombo", addr:"Main Street, Negombo", lat:7.2115, lng:79.8391, dist:"1.5 km" },
-    { name:"LAUGFS Super — Negombo", addr:"Kurana, Negombo", lat:7.1873, lng:79.8617, dist:"3.1 km" },
-    { name:"Sathosa — Negombo", addr:"Poruthota Road, Negombo", lat:7.2260, lng:79.8467, dist:"3.6 km" },
+    { name:"Cargills Food City — Kandy City Centre", addr:"Dalada Veediya, Kandy", lat:7.2921, lng:80.6350, dist:"0.5 km" },
+    { name:"Keells Super — Peradeniya Road", addr:"Peradeniya Road, Kandy", lat:7.2740, lng:80.6234, dist:"2.1 km" },
+    { name:"Arpico Super Centre — Katugastota Road", addr:"Katugastota Road, Kandy", lat:7.3040, lng:80.6280, dist:"1.8 km" },
+    { name:"LAUGFS Super — Kandy", addr:"William Gopallawa Mawatha, Kandy", lat:7.2865, lng:80.6410, dist:"1.1 km" },
+    { name:"Sathosa — Katugastota", addr:"Main Street, Katugastota", lat:7.3325, lng:80.6234, dist:"5.4 km" },
   ];
 
   function initMap(){
-    const map = L.map('map', { zoomControl:false, attributionControl:false }).setView([7.2083, 79.8420], 13);
+    const map = L.map('map', { zoomControl:false, attributionControl:false }).setView([7.2950, 80.6320], 13);
     window._leafletMap = map;
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
       subdomains:'abcd', maxZoom:19
@@ -622,6 +806,87 @@
       </div>
     `).join('');
   }
+
+  // ---------- barcode / QR scanning ----------
+  let stream = null;
+  let scanning = false;
+  let scanTimer = null;
+  let detector = null;
+
+  async function startScan(){
+    const video = document.getElementById('scan-video');
+    const statusEl = document.getElementById('scan-status');
+    statusEl.textContent = 'Opening camera…';
+
+    try{
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      video.srcObject = stream;
+      await video.play();
+      scanning = true;
+
+      if('BarcodeDetector' in window){
+        try{
+          detector = new BarcodeDetector({ formats: ['qr_code','ean_13','ean_8','code_128','upc_a','upc_e'] });
+          statusEl.textContent = 'Point the camera at the bottle\'s barcode or QR';
+          scanTimer = setInterval(async ()=>{
+            if(!scanning) return;
+            try{
+              const codes = await detector.detect(video);
+              if(codes && codes.length>0){
+                handleScanSuccess(codes[0].rawValue || 'Unknown code');
+              }
+            }catch(e){ /* keep trying */ }
+          }, 400);
+        }catch(e){
+          statusEl.textContent = 'Auto-scan not supported here — tap "Simulate" below';
+        }
+      } else {
+        statusEl.textContent = 'Auto-scan not supported on this browser — tap "Simulate" below';
+      }
+    }catch(e){
+      statusEl.textContent = 'Camera access denied — tap "Simulate" to try a demo scan';
+    }
+  }
+
+  function stopScan(){
+    scanning = false;
+    if(scanTimer){ clearInterval(scanTimer); scanTimer = null; }
+    if(stream){ stream.getTracks().forEach(t=>t.stop()); stream = null; }
+    const video = document.getElementById('scan-video');
+    if(video) video.srcObject = null;
+  }
+
+  function simulateScan(){
+    const demo = [
+      { code:'4791234567890', label:'Cargills Pure Water 500ml' },
+      { code:'4790987654321', label:'Keells Aqua 1L' },
+      { code:'4795551234567', label:'LAUGFS Spring Water 500ml' }
+    ];
+    const pick = demo[Math.floor(Math.random()*demo.length)];
+    handleScanSuccess(pick.code, pick.label);
+  }
+
+  function handleScanSuccess(code, label){
+    stopScan();
+    const pts = 10;
+    balance += pts;
+    refreshUI();
+    addHistoryEntry(label || ('Bottle scanned · '+code), pts);
+
+    document.getElementById('scan-live').style.display = 'none';
+    const resultEl = document.getElementById('scan-result');
+    resultEl.style.display = 'block';
+    document.getElementById('scan-code').textContent = label ? (label+' · '+code) : code;
+    document.getElementById('scan-points').textContent = '+'+pts;
+  }
+
+  function resetScan(){
+    document.getElementById('scan-result').style.display = 'none';
+    document.getElementById('scan-live').style.display = 'block';
+    document.getElementById('scan-status').textContent = 'Tap "Start Camera" to begin';
+  }
+
+  refreshUI();
 </script>
 </body>
 </html>
