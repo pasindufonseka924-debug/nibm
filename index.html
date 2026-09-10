@@ -627,10 +627,9 @@
           <div class="reticle"></div>
           <div class="scanline"></div>
         </div>
-        <div class="scan-status" id="scan-status">Tap "Start Camera" to begin</div>
+        <div class="scan-status" id="scan-status">Opening camera…</div>
         <div class="scan-actions">
           <button class="btn-mango" onclick="startScan()">Start Camera</button>
-          <button class="btn-ghost" onclick="simulateScan()">Simulate</button>
         </div>
       </div>
 
@@ -639,7 +638,7 @@
         <div class="rtitle">Bottle scanned</div>
         <div class="rpoints" id="scan-points">+10</div>
         <div class="scan-actions">
-          <button class="btn-mango" onclick="resetScan()">Scan another</button>
+          <button class="btn-mango" onclick="resetScan(); startScan();">Scan another</button>
           <button class="btn-ghost" onclick="showScreen('wallet')">View Wallet</button>
         </div>
       </div>
@@ -715,7 +714,10 @@
     if(name==='map' && mapInited){
       setTimeout(()=>{ if(window._leafletMap) window._leafletMap.invalidateSize(); }, 80);
     }
-    if(name!=='scan'){
+    if(name==='scan'){
+      resetScan();
+      startScan();
+    } else {
       stopScan();
     }
   }
@@ -858,10 +860,6 @@
     if(video) video.srcObject = null;
   }
 
-  function simulateScan(){
-    handleScanSuccess();
-  }
-
   function handleScanSuccess(){
     stopScan();
     const pts = 10;
@@ -878,7 +876,7 @@
   function resetScan(){
     document.getElementById('scan-result').style.display = 'none';
     document.getElementById('scan-live').style.display = 'block';
-    document.getElementById('scan-status').textContent = 'Tap "Start Camera" to begin';
+    document.getElementById('scan-status').textContent = 'Opening camera…';
   }
 
   refreshUI();
