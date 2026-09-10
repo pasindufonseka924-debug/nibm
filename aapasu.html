@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Aapasu — Bottle Return Rewards</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+  :root{
+    --lagoon-deep:#0A2C29;
+    --lagoon-panel:#123D38;
+    --lagoon-panel-2:#164A43;
+    --teal:#1FA187;
+    --teal-soft:#66CDB8;
+    --mango:#FFB44D;
+    --mango-deep:#E8933A;
+    --sand:#F3ECDA;
+    --sand-dim:#C9C0A9;
+    --coral:#FF7A66;
+    --line: rgba(243,236,218,0.14);
+    --radius-card: 22px;
+    --radius-pill: 999px;
+  }
+
+  *{box-sizing:border-box; -webkit-tap-highlight-color: transparent;}
+  html,body{margin:0; padding:0;}
+  body{
+    background: #04120F;
+    font-family:'Inter',sans-serif;
+    color:var(--sand);
+    display:flex;
+    justify-content:center;
+    min-height:100vh;
+  }
+  h1,h2,h3, .display{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    margin:0;
+  }
+  a{color:inherit; text-decoration:none;}
+  button{font-family:inherit; cursor:pointer;}
+
+  .phone{
+    width:100%;
+    max-width:430px;
+    min-height:100vh;
+    background:
+      radial-gradient(140% 60% at 15% -10%, #1B5850 0%, transparent 55%),
+      radial-gradient(120% 50% at 100% 0%, #0F3B35 0%, transparent 50%),
+      var(--lagoon-deep);
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    box-shadow: 0 0 60px rgba(0,0,0,0.5);
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:22px 20px 10px;
+  }
+  .brand{
+    display:flex;
+    align-items:baseline;
+    gap:8px;
+  }
+  .brand .mark{
+    width:34px; height:34px;
+    border-radius:10px;
+    background:linear-gradient(155deg, var(--teal), #0C6B5C);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Fraunces',serif;
+    font-weight:700;
+    font-size:18px;
+    color:var(--sand);
+    flex:none;
+  }
+  .brand .name{
+    font-family:'Fraunces',serif;
+    font-size:20px;
+    font-weight:600;
+    letter-spacing:0.2px;
+  }
+  .brand .name small{
+    display:block;
+    font-family:'Inter',sans-serif;
+    font-size:10.5px;
+    font-weight:400;
+    color:var(--sand-dim);
+    letter-spacing:0.3px;
+  }
+  .points-chip{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    background:rgba(255,180,77,0.12);
+    border:1px solid rgba(255,180,77,0.35);
+    color:var(--mango);
+    padding:7px 12px 7px 8px;
+    border-radius:var(--radius-pill);
+    font-size:13.5px;
+    font-weight:600;
+  }
+  .points-chip .dot{
+    width:16px;height:16px;border-radius:50%;
+    background:var(--mango);
+    display:flex;align-items:center;justify-content:center;
+    font-size:10px; color:#3A2400; font-weight:700;
+  }
+
+  /* ---------- Screens ---------- */
+  .screens{ flex:1; position:relative; padding-bottom:92px; }
+  .screen{ display:none; padding:6px 20px 28px; animation: fadeIn .28s ease; }
+  .screen.active{ display:block; }
+  @keyframes fadeIn{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:translateY(0);} }
+
+  /* ---------- Home ---------- */
+  .card-token{
+    margin-top:8px;
+    border-radius:26px;
+    padding:22px 22px 20px;
+    background:
+      radial-gradient(120% 140% at 100% 0%, rgba(255,180,77,0.18), transparent 60%),
+      linear-gradient(155deg, var(--lagoon-panel-2), var(--lagoon-panel) 70%);
+    border:1px solid var(--line);
+    position:relative;
+    overflow:hidden;
+  }
+  .card-token::after{
+    content:"";
+    position:absolute; right:-40px; bottom:-50px;
+    width:150px; height:150px; border-radius:50%;
+    background:radial-gradient(circle, rgba(31,161,135,0.35), transparent 70%);
+  }
+  .card-token .label{
+    font-size:12.5px; color:var(--sand-dim); letter-spacing:0.2px;
+  }
+  .card-token .amount{
+    font-size:44px;
+    line-height:1;
+    margin:8px 0 2px;
+    font-family:'Fraunces',serif;
+    font-weight:700;
+    color:var(--sand);
+  }
+  .card-token .amount span{ font-size:18px; color:var(--teal-soft); font-family:'Inter',sans-serif; font-weight:600; }
+  .card-token .sub{ font-size:13px; color:var(--sand-dim); margin-bottom:16px; }
+  .progress-track{
+    height:9px; border-radius:99px; background:rgba(243,236,218,0.12); overflow:hidden;
+  }
+  .progress-fill{
+    height:100%; border-radius:99px;
+    background:linear-gradient(90deg, var(--teal), var(--teal-soft));
+  }
+  .progress-meta{
+    display:flex; justify-content:space-between; margin-top:9px;
+    font-size:12px; color:var(--sand-dim);
+  }
+  .progress-meta b{ color:var(--mango); font-weight:600; }
+
+  .section-title{
+    display:flex; align-items:baseline; justify-content:space-between;
+    margin:28px 0 12px;
+  }
+  .section-title h2{ font-size:18px; }
+  .section-title .hint{ font-size:12px; color:var(--sand-dim); }
+
+  .tile-row{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap:10px;
+  }
+  .tile{
+    background:var(--lagoon-panel);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:16px 10px 12px;
+    display:flex; flex-direction:column; align-items:center; gap:8px;
+    text-align:center;
+    transition: transform .15s ease, background .15s ease;
+  }
+  .tile:active{ transform:scale(0.96); background:var(--lagoon-panel-2); }
+  .tile .ic{
+    width:40px; height:40px; border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(31,161,135,0.18);
+  }
+  .tile .ic svg{ width:20px; height:20px; }
+  .tile .t{ font-size:12.5px; font-weight:600; line-height:1.3; }
+
+  .how-list{ display:flex; flex-direction:column; gap:10px; }
+  .how-item{
+    display:flex; gap:13px; align-items:flex-start;
+    background:var(--lagoon-panel);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:13px 14px;
+  }
+  .how-item .n{
+    flex:none; width:26px; height:26px; border-radius:50%;
+    background:rgba(255,180,77,0.15); color:var(--mango);
+    display:flex; align-items:center; justify-content:center;
+    font-size:12.5px; font-weight:700;
+    font-family:'Fraunces',serif;
+  }
+  .how-item p{ margin:0; font-size:13px; line-height:1.55; color:var(--sand); }
+  .how-item p b{ color:var(--teal-soft); font-weight:600; }
+
+  /* ---------- Map screen ---------- */
+  #map{
+    width:100%; height:260px; border-radius:20px;
+    border:1px solid var(--line);
+    margin-top:6px;
+  }
+  .leaflet-container{ background:var(--lagoon-panel); font-family:'Inter',sans-serif; }
+  .shop-card{
+    display:flex; gap:12px; align-items:center;
+    background:var(--lagoon-panel);
+    border:1px solid var(--line);
+    border-radius:16px;
+    padding:12px 14px;
+    margin-bottom:10px;
+  }
+  .shop-card .badge{
+    flex:none; width:42px; height:42px; border-radius:12px;
+    background:rgba(31,161,135,0.18);
+    display:flex; align-items:center; justify-content:center;
+    font-size:16px;
+  }
+  .shop-card .info{ flex:1; min-width:0; }
+  .shop-card .info .name{ font-size:13.5px; font-weight:600; }
+  .shop-card .info .addr{ font-size:11.5px; color:var(--sand-dim); margin-top:2px; }
+  .shop-card .dist{
+    flex:none; font-size:11.5px; color:var(--teal-soft); font-weight:600;
+    background:rgba(31,161,135,0.14); padding:5px 9px; border-radius:99px;
+  }
+
+  /* ---------- Wallet screen ---------- */
+  .coupon{
+    position:relative;
+    display:flex; align-items:center; gap:14px;
+    background:linear-gradient(120deg, rgba(255,180,77,0.14), rgba(255,180,77,0.03));
+    border:1px dashed rgba(255,180,77,0.45);
+    border-radius:16px;
+    padding:14px 16px;
+    margin-bottom:10px;
+  }
+  .coupon .pct{
+    font-family:'Fraunces',serif;
+    font-size:22px; font-weight:700; color:var(--mango);
+    flex:none;
+  }
+  .coupon .txt .t{ font-size:13px; font-weight:600; }
+  .coupon .txt .s{ font-size:11.5px; color:var(--sand-dim); margin-top:2px; }
+  .coupon .status{
+    margin-left:auto; font-size:10.5px; font-weight:700;
+    padding:4px 8px; border-radius:99px; flex:none;
+  }
+  .coupon.unlocked .status{ background:rgba(31,161,135,0.2); color:var(--teal-soft); }
+  .coupon.locked{ opacity:0.55; }
+  .coupon.locked .status{ background:rgba(243,236,218,0.1); color:var(--sand-dim); }
+
+  .history-row{
+    display:flex; align-items:center; gap:12px;
+    padding:11px 2px;
+    border-bottom:1px solid var(--line);
+  }
+  .history-row:last-child{ border-bottom:none; }
+  .history-row .ic{
+    flex:none; width:34px; height:34px; border-radius:10px;
+    background:rgba(31,161,135,0.16);
+    display:flex; align-items:center; justify-content:center;
+    font-size:15px;
+  }
+  .history-row .t{ font-size:13px; font-weight:600; }
+  .history-row .d{ font-size:11px; color:var(--sand-dim); margin-top:1px; }
+  .history-row .pt{ margin-left:auto; font-size:13px; font-weight:700; color:var(--teal-soft); }
+
+  /* ---------- Leaderboard screen ---------- */
+  .lb-toggle{
+    display:flex; background:var(--lagoon-panel); border:1px solid var(--line);
+    border-radius:99px; padding:4px; margin-top:8px;
+  }
+  .lb-toggle button{
+    flex:1; border:none; background:transparent; color:var(--sand-dim);
+    padding:9px 0; border-radius:99px; font-size:12.5px; font-weight:600;
+    transition: all .15s ease;
+  }
+  .lb-toggle button.on{ background:var(--teal); color:#04201B; }
+
+  .podium{
+    display:flex; align-items:flex-end; justify-content:center; gap:10px;
+    margin:22px 0 6px;
+  }
+  .p-slot{ text-align:center; }
+  .p-slot .av{
+    width:52px; height:52px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Fraunces',serif; font-weight:700; font-size:17px;
+    margin:0 auto 8px;
+    border:2px solid var(--mango);
+    background:var(--lagoon-panel-2);
+  }
+  .p-slot.first .av{ width:64px; height:64px; font-size:20px; box-shadow:0 0 0 4px rgba(255,180,77,0.18);}
+  .p-slot .nm{ font-size:11.5px; font-weight:600; }
+  .p-slot .pt{ font-size:11px; color:var(--mango); font-weight:700; margin-top:2px; }
+  .p-slot .bar{
+    width:60px; margin:10px auto 0; border-radius:10px 10px 0 0;
+    background:linear-gradient(180deg, var(--lagoon-panel-2), var(--lagoon-panel));
+    border:1px solid var(--line); border-bottom:none;
+  }
+  .p-slot.first .bar{ height:56px; }
+  .p-slot.second .bar{ height:38px; }
+  .p-slot.third .bar{ height:26px; }
+
+  .lb-row{
+    display:flex; align-items:center; gap:12px;
+    background:var(--lagoon-panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:11px 13px;
+    margin-bottom:8px;
+  }
+  .lb-row.me{ border-color:var(--teal); background:rgba(31,161,135,0.12); }
+  .lb-row .rk{ flex:none; width:20px; font-size:12.5px; color:var(--sand-dim); font-weight:700; text-align:center;}
+  .lb-row .av{
+    flex:none; width:34px; height:34px; border-radius:50%;
+    background:var(--lagoon-panel-2); border:1px solid var(--line);
+    display:flex; align-items:center; justify-content:center;
+    font-size:12.5px; font-weight:700; font-family:'Fraunces',serif;
+  }
+  .lb-row .nm{ flex:1; font-size:13px; font-weight:600; }
+  .lb-row .nm small{ display:block; font-size:10.5px; color:var(--sand-dim); font-weight:400; }
+  .lb-row .pt{ font-size:13px; font-weight:700; color:var(--mango); }
+
+  /* ---------- Bottom nav ---------- */
+  .tabbar{
+    position:fixed; bottom:0; left:50%; transform:translateX(-50%);
+    width:100%; max-width:430px;
+    display:flex;
+    background:rgba(10,44,41,0.92);
+    backdrop-filter: blur(14px);
+    border-top:1px solid var(--line);
+    padding:10px 10px calc(10px + env(safe-area-inset-bottom));
+    gap:4px;
+  }
+  .tab{
+    flex:1; border:none; background:transparent; color:var(--sand-dim);
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    padding:6px 0; border-radius:14px; font-size:10.5px; font-weight:600;
+  }
+  .tab svg{ width:20px; height:20px; }
+  .tab.on{ color:var(--mango); }
+  .tab.on .ic-wrap{ background:rgba(255,180,77,0.14); }
+  .tab .ic-wrap{ width:34px; height:26px; border-radius:9px; display:flex; align-items:center; justify-content:center; }
+
+  ::-webkit-scrollbar{ display:none; }
+
+  @media (min-width:431px){
+    body{ background:#04120F; }
+  }
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="mark">A</div>
+      <div class="name">Aapasu<small>Bottle Return Rewards</small></div>
+    </div>
+    <div class="points-chip"><span class="dot">340</span> points</div>
+  </div>
+
+  <div class="screens">
+
+    <!-- ============ HOME ============ -->
+    <section class="screen active" id="screen-home">
+      <div class="card-token">
+        <div class="label">Your points balance</div>
+        <div class="amount">340 <span>points</span></div>
+        <div class="sub"><b style="color:var(--mango)">160</b> points to go until 10% off</div>
+        <div class="progress-track"><div class="progress-fill" style="width:68%"></div></div>
+        <div class="progress-meta"><span>250 · 5% unlocked</span><span><b>500</b> · 10%</span></div>
+      </div>
+
+      <div class="section-title">
+        <h2>What you can do</h2>
+      </div>
+      <div class="tile-row">
+        <button class="tile" onclick="showScreen('map')">
+          <div class="ic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#66CDB8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20l-6-3V4l6 3 6-3 6 3v13l-6-3-6 3z"/><path d="M9 4v13"/><path d="M15 7v13"/></svg>
+          </div>
+          <div class="t">View<br>Map</div>
+        </button>
+        <button class="tile" onclick="showScreen('wallet')">
+          <div class="ic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#66CDB8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/><circle cx="16" cy="14.5" r="1.2" fill="#66CDB8" stroke="none"/></svg>
+          </div>
+          <div class="t">My<br>Wallet</div>
+        </button>
+        <button class="tile" onclick="showScreen('leaderboard')">
+          <div class="ic">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#66CDB8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v6a5 5 0 0 1-10 0V4z"/><path d="M7 6H4a3 3 0 0 0 3 4"/><path d="M17 6h3a3 3 0 0 1-3 4"/></svg>
+          </div>
+          <div class="t">Leader<br>board</div>
+        </button>
+      </div>
+
+      <div class="section-title">
+        <h2>How it works</h2>
+      </div>
+      <div class="how-list">
+        <div class="how-item">
+          <div class="n">1</div>
+          <p>Return the <b>plastic bottle</b> you bought at any participating shop.</p>
+        </div>
+        <div class="how-item">
+          <div class="n">2</div>
+          <p>Scan the bottle's QR code in-store to add <b>points</b> to your account instantly.</p>
+        </div>
+        <div class="how-item">
+          <div class="n">3</div>
+          <p>Once you've earned enough points, redeem them for a discount on new products from the <b>same brand</b>.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ MAP ============ -->
+    <section class="screen" id="screen-map">
+      <div class="section-title" style="margin-top:14px;">
+        <h2>Shops accepting bottle returns</h2>
+      </div>
+      <div id="map"></div>
+      <div class="section-title"><h2 style="font-size:15px;">Nearby shops</h2><span class="hint">Negombo</span></div>
+      <div id="shop-list"></div>
+    </section>
+
+    <!-- ============ WALLET ============ -->
+    <section class="screen" id="screen-wallet">
+      <div class="card-token" style="margin-top:14px;">
+        <div class="label">Wallet balance</div>
+        <div class="amount">340 <span>points</span></div>
+        <div class="sub">You typically earn 10 points per bottle returned</div>
+        <div class="progress-track"><div class="progress-fill" style="width:68%"></div></div>
+        <div class="progress-meta"><span>250 · 5%</span><span><b>500</b> · 10%</span></div>
+      </div>
+
+      <div class="section-title"><h2>Your discounts</h2></div>
+      <div class="coupon unlocked">
+        <div class="pct">5%</div>
+        <div class="txt">
+          <div class="t">Off a new bottled water pack</div>
+          <div class="s">Unlocked at 250 points</div>
+        </div>
+        <div class="status">USE NOW</div>
+      </div>
+      <div class="coupon locked">
+        <div class="pct">10%</div>
+        <div class="txt">
+          <div class="t">Off any product from the same brand</div>
+          <div class="s">160 more points to unlock</div>
+        </div>
+        <div class="status">LOCKED</div>
+      </div>
+      <div class="coupon locked">
+        <div class="pct">20%</div>
+        <div class="txt">
+          <div class="t">Off a refill pack + bottle bundle</div>
+          <div class="s">Unlocks at 1000 points</div>
+        </div>
+        <div class="status">LOCKED</div>
+      </div>
+
+      <div class="section-title"><h2>Recent activity</h2></div>
+      <div class="how-list" style="background:var(--lagoon-panel); border:1px solid var(--line); border-radius:16px; padding:4px 14px;">
+        <div class="history-row">
+          <div class="ic">♻️</div>
+          <div>
+            <div class="t">Cargills Food City — Negombo</div>
+            <div class="d">2 bottles · Today</div>
+          </div>
+          <div class="pt">+20</div>
+        </div>
+        <div class="history-row">
+          <div class="ic">🏷️</div>
+          <div>
+            <div class="t">5% discount used</div>
+            <div class="d">2 days ago</div>
+          </div>
+          <div class="pt" style="color:var(--coral)">−250</div>
+        </div>
+        <div class="history-row">
+          <div class="ic">♻️</div>
+          <div>
+            <div class="t">Keells Super — Negombo</div>
+            <div class="d">5 bottles · 4 days ago</div>
+          </div>
+          <div class="pt">+50</div>
+        </div>
+        <div class="history-row">
+          <div class="ic">♻️</div>
+          <div>
+            <div class="t">Arpico Super Centre — Negombo</div>
+            <div class="d">3 bottles · A week ago</div>
+          </div>
+          <div class="pt">+30</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ LEADERBOARD ============ -->
+    <section class="screen" id="screen-leaderboard">
+      <div class="section-title" style="margin-top:14px;"><h2>Leaderboard</h2></div>
+      <div class="lb-toggle">
+        <button class="on" id="btn-friends" onclick="setLbView('friends')">Friends</button>
+        <button id="btn-global" onclick="setLbView('global')">Global</button>
+      </div>
+
+      <div class="podium">
+        <div class="p-slot second"><div class="av">D</div><div class="nm">Dilani</div><div class="pt">410</div><div class="bar"></div></div>
+        <div class="p-slot first"><div class="av">K</div><div class="nm">Kasun</div><div class="pt">520</div><div class="bar"></div></div>
+        <div class="p-slot third"><div class="av">C</div><div class="nm">Chamara</div><div class="pt">375</div><div class="bar"></div></div>
+      </div>
+
+      <div style="margin-top:18px;">
+        <div class="lb-row me"><div class="rk">4</div><div class="av">Y</div><div class="nm">You</div><div class="pt">340</div></div>
+        <div class="lb-row"><div class="rk">5</div><div class="av">N</div><div class="nm">Nadeeshani</div><div class="pt">298</div></div>
+        <div class="lb-row"><div class="rk">6</div><div class="av">R</div><div class="nm">Ruwan</div><div class="pt">210</div></div>
+        <div class="lb-row"><div class="rk">7</div><div class="av">T</div><div class="nm">Tharika</div><div class="pt">175</div></div>
+        <div class="lb-row"><div class="rk">8</div><div class="av">M</div><div class="nm">Madushanka</div><div class="pt">140</div></div>
+      </div>
+    </section>
+
+  </div>
+
+  <div class="tabbar">
+    <button class="tab on" id="tab-home" onclick="showScreen('home')">
+      <div class="ic-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg></div>
+      Home
+    </button>
+    <button class="tab" id="tab-map" onclick="showScreen('map')">
+      <div class="ic-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20l-6-3V4l6 3 6-3 6 3v13l-6-3-6 3z"/></svg></div>
+      Map
+    </button>
+    <button class="tab" id="tab-wallet" onclick="showScreen('wallet')">
+      <div class="ic-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/></svg></div>
+      Wallet
+    </button>
+    <button class="tab" id="tab-leaderboard" onclick="showScreen('leaderboard')">
+      <div class="ic-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 21h8"/><path d="M12 17v4"/><path d="M7 4h10v6a5 5 0 0 1-10 0V4z"/></svg></div>
+      Leaders
+    </button>
+  </div>
+
+</div>
+
+<script>
+  // ---------- screen switching ----------
+  let mapInited = false;
+  function showScreen(name){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+    document.getElementById('screen-'+name).classList.add('active');
+    document.getElementById('tab-'+name).classList.add('on');
+    if(name==='map' && !mapInited){
+      initMap();
+      mapInited = true;
+    }
+    if(name==='map' && mapInited){
+      setTimeout(()=>{ if(window._leafletMap) window._leafletMap.invalidateSize(); }, 80);
+    }
+  }
+
+  function setLbView(v){
+    document.getElementById('btn-friends').classList.toggle('on', v==='friends');
+    document.getElementById('btn-global').classList.toggle('on', v==='global');
+  }
+
+  // ---------- shops mock data (Negombo, real chains / real streets) ----------
+  const shops = [
+    { name:"Cargills Food City — Negombo", addr:"Sea Street, Negombo", lat:7.2094, lng:79.8384, dist:"0.6 km" },
+    { name:"Keells Super — Negombo", addr:"Colombo Road, Negombo", lat:7.2032, lng:79.8412, dist:"1.2 km" },
+    { name:"Arpico Super Centre — Negombo", addr:"Main Street, Negombo", lat:7.2115, lng:79.8391, dist:"1.5 km" },
+    { name:"LAUGFS Super — Negombo", addr:"Kurana, Negombo", lat:7.1873, lng:79.8617, dist:"3.1 km" },
+    { name:"Sathosa — Negombo", addr:"Poruthota Road, Negombo", lat:7.2260, lng:79.8467, dist:"3.6 km" },
+  ];
+
+  function initMap(){
+    const map = L.map('map', { zoomControl:false, attributionControl:false }).setView([7.2083, 79.8420], 13);
+    window._leafletMap = map;
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      subdomains:'abcd', maxZoom:19
+    }).addTo(map);
+
+    const icon = L.divIcon({
+      className:'',
+      html:'<div style="width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:#FFB44D;border:2px solid #0A2C29;box-shadow:0 2px 6px rgba(0,0,0,0.4);"></div>',
+      iconSize:[26,26], iconAnchor:[13,26]
+    });
+
+    shops.forEach(s=>{
+      L.marker([s.lat, s.lng], {icon}).addTo(map).bindPopup(`<b>${s.name}</b><br>${s.addr}`);
+    });
+
+    const list = document.getElementById('shop-list');
+    list.innerHTML = shops.map(s=>`
+      <div class="shop-card">
+        <div class="badge">♻️</div>
+        <div class="info">
+          <div class="name">${s.name}</div>
+          <div class="addr">${s.addr}</div>
+        </div>
+        <div class="dist">${s.dist}</div>
+      </div>
+    `).join('');
+  }
+</script>
+</body>
+</html>
