@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>NIBM Bottle Return — Rewards</title>
+<title>ReEarn — Return & Earn</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -403,21 +403,25 @@
     background:var(--lagoon-panel);
     border:1px solid var(--line);
     border-radius:20px;
-    padding:30px 20px 24px;
+    padding:22px 20px 20px;
   }
-  .scan-result .check{
-    width:58px; height:58px; border-radius:50%;
-    background:rgba(31,161,135,0.18);
-    border:2px solid var(--teal);
+  .scan-result .star{
+    width:52px; height:52px;
     display:flex; align-items:center; justify-content:center;
-    margin:0 auto 14px;
-    font-size:26px; color:var(--teal-soft);
+    margin:0 auto 10px;
+    font-size:34px;
+    filter: drop-shadow(0 0 10px rgba(255,180,77,0.5));
+    animation: starpop .4s ease;
   }
-  .scan-result .rtitle{ font-size:16px; font-weight:600; }
-  .scan-result .rcode{ font-size:12px; color:var(--sand-dim); margin-top:4px; }
+  @keyframes starpop{
+    0%{ transform:scale(0.4) rotate(-15deg); opacity:0; }
+    60%{ transform:scale(1.15) rotate(6deg); opacity:1; }
+    100%{ transform:scale(1) rotate(0deg); opacity:1; }
+  }
+  .scan-result .rtitle{ font-size:14px; font-weight:600; color:var(--sand-dim); }
   .scan-result .rpoints{
     font-family:'Fraunces',serif; font-size:30px; font-weight:700;
-    color:var(--mango); margin:14px 0 4px;
+    color:var(--mango); margin:8px 0 2px;
   }
 
   /* ---------- Bottom nav + FAB ---------- */
@@ -468,7 +472,7 @@
   <div class="topbar">
     <div class="brand">
       <div class="mark">N</div>
-      <div class="name">NIBM Bottle Return<small>Rewards for a Greener Campus</small></div>
+      <div class="name">ReEarn<small>Return &amp; Earn</small></div>
     </div>
     <div class="points-chip"><span class="dot" id="pts-topbar">340</span> points</div>
   </div>
@@ -631,9 +635,8 @@
       </div>
 
       <div class="scan-result" id="scan-result">
-        <div class="check">✓</div>
-        <div class="rtitle">Bottle verified</div>
-        <div class="rcode" id="scan-code">—</div>
+        <div class="star">⭐</div>
+        <div class="rtitle">Bottle scanned</div>
         <div class="rpoints" id="scan-points">+10</div>
         <div class="scan-actions">
           <button class="btn-mango" onclick="resetScan()">Scan another</button>
@@ -658,10 +661,9 @@
 
       <div style="margin-top:18px;">
         <div class="lb-row me"><div class="rk">4</div><div class="av">Y</div><div class="nm">You</div><div class="pt" id="pts-lb">340</div></div>
-        <div class="lb-row"><div class="rk">5</div><div class="av">N</div><div class="nm">Nadeeshani</div><div class="pt">298</div></div>
-        <div class="lb-row"><div class="rk">6</div><div class="av">R</div><div class="nm">Ruwan</div><div class="pt">210</div></div>
-        <div class="lb-row"><div class="rk">7</div><div class="av">T</div><div class="nm">Tharika</div><div class="pt">175</div></div>
-        <div class="lb-row"><div class="rk">8</div><div class="av">M</div><div class="nm">Madushanka</div><div class="pt">140</div></div>
+        <div class="lb-row"><div class="rk">5</div><div class="av">V</div><div class="nm">Vishmi</div><div class="pt">298</div></div>
+        <div class="lb-row"><div class="rk">6</div><div class="av">A</div><div class="nm">Amasha</div><div class="pt">210</div></div>
+        <div class="lb-row"><div class="rk">7</div><div class="av">V</div><div class="nm">Vidushi</div><div class="pt">175</div></div>
       </div>
     </section>
 
@@ -833,7 +835,7 @@
             try{
               const codes = await detector.detect(video);
               if(codes && codes.length>0){
-                handleScanSuccess(codes[0].rawValue || 'Unknown code');
+                handleScanSuccess();
               }
             }catch(e){ /* keep trying */ }
           }, 400);
@@ -857,26 +859,19 @@
   }
 
   function simulateScan(){
-    const demo = [
-      { code:'4791234567890', label:'Cargills Pure Water 500ml' },
-      { code:'4790987654321', label:'Keells Aqua 1L' },
-      { code:'4795551234567', label:'LAUGFS Spring Water 500ml' }
-    ];
-    const pick = demo[Math.floor(Math.random()*demo.length)];
-    handleScanSuccess(pick.code, pick.label);
+    handleScanSuccess();
   }
 
-  function handleScanSuccess(code, label){
+  function handleScanSuccess(){
     stopScan();
     const pts = 10;
     balance += pts;
     refreshUI();
-    addHistoryEntry(label || ('Bottle scanned · '+code), pts);
+    addHistoryEntry('Bottle scanned', pts);
 
     document.getElementById('scan-live').style.display = 'none';
     const resultEl = document.getElementById('scan-result');
     resultEl.style.display = 'block';
-    document.getElementById('scan-code').textContent = label ? (label+' · '+code) : code;
     document.getElementById('scan-points').textContent = '+'+pts;
   }
 
