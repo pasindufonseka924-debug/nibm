@@ -1027,9 +1027,30 @@
     `).join('');
   }
 
-  // ---------- barcode / QR scanning (ZXing — works across browsers, no native API needed) ----------
+  // ---------- barcode / QR scanning ----------
+  // Camera is opened with plain getUserMedia (always reliable). ZXing only reads
+  // frames from the already-playing video — it never manages the camera itself,
+  // so a decoder hiccup can no longer stop the camera from opening.
   let codeReader = null;
+  let cameraStream = null;
+  let scanLoopActive = false;
   let scanLocked = false;
+
+  function getReader(){
+    if(!codeReader){
+      const hints = new Map();
+      hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
+        ZXing.BarcodeFormat.QR_CODE,
+        ZXing.BarcodeFormat.EAN_13,
+        ZXing.BarcodeFormat.EAN_8,
+        ZXing.BarcodeFormat.UPC_A,
+        ZXing.BarcodeFormat.UPC_E,
+        ZXing.BarcodeFormat.CODE_128
+      ]);
+      codeReader = new ZXing.BrowserMultiFormatReader(hints);
+    }
+    return codeReader;
+  }
 
   async function startScan(){
     const video = document.getElementById('scan-video');
@@ -1038,46 +1059,64 @@
     scanLocked = false;
 
     try{
-      if(!codeReader){
-        const hints = new Map();
-        hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS, [
-          ZXing.BarcodeFormat.QR_CODE,
-          ZXing.BarcodeFormat.EAN_13,
-          ZXing.BarcodeFormat.EAN_8,
-          ZXing.BarcodeFormat.UPC_A,
-          ZXing.BarcodeFormat.UPC_E,
-          ZXing.BarcodeFormat.CODE_128
-        ]);
-        codeReader = new ZXing.BrowserMultiFormatReader(hints);
-      }
-
-      await codeReader.decodeFromConstraints(
-        { video: { facingMode: 'environment' } },
-        video,
-        (result, err) => {
-          if(result && !scanLocked){
-            const text = (result.getText ? result.getText() : '').trim();
-            const c = getCategory(selectedCategoryId);
-            const mismatchEl = document.getElementById('scan-mismatch');
-            if(text === c.qr){
-              scanLocked = true;
-              handleScanSuccess();
-            } else {
-              if(mismatchEl) mismatchEl.textContent = "That QR doesn't match this bottle type — pick the right category or scan its own QR";
-            }
-          }
-        }
-      );
-      statusEl.textContent = 'Point the camera at this bottle\'s dedicated QR code';
+      cameraStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' } },
+        audio: false
+      });
     }catch(e){
-      statusEl.textContent = 'Camera access denied — check camera permissions and try again';
+      statusEl.textContent = 'Camera access denied — check site permissions and try again';
+      return;
+    }
+
+    try{
+      video.srcObject = cameraStream;
+      await video.play();
+    }catch(e){
+      statusEl.textContent = 'Could not start the camera preview — try again';
+      return;
+    }
+
+    statusEl.textContent = 'Point the camera at this bottle\'s dedicated QR code';
+    scanLoopActive = true;
+    scanFrameLoop();
+  }
+
+  async function scanFrameLoop(){
+    const video = document.getElementById('scan-video');
+    if(!scanLoopActive || scanLocked) return;
+
+    try{
+      const result = await getReader().decodeOnceFromVideoElement(video);
+      if(result && !scanLocked){
+        const text = (result.getText ? result.getText() : '').trim();
+        const c = getCategory(selectedCategoryId);
+        const mismatchEl = document.getElementById('scan-mismatch');
+        if(text === c.qr){
+          scanLocked = true;
+          handleScanSuccess();
+          return;
+        } else if(mismatchEl){
+          mismatchEl.textContent = "That QR doesn't match this bottle type — pick the right category or scan its own QR";
+        }
+      }
+    }catch(e){
+      // no code found in this frame — keep trying
+    }
+
+    if(scanLoopActive && !scanLocked){
+      setTimeout(scanFrameLoop, 250);
     }
   }
 
   function stopScan(){
     scanLocked = true;
+    scanLoopActive = false;
     if(codeReader){
       try{ codeReader.reset(); }catch(e){ /* ignore */ }
+    }
+    if(cameraStream){
+      cameraStream.getTracks().forEach(t=>t.stop());
+      cameraStream = null;
     }
     const video = document.getElementById('scan-video');
     if(video) video.srcObject = null;
