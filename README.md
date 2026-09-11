@@ -38,7 +38,7 @@ For phone camera testing use the published HTTPS site. A phone opening an ordina
 
 ## QR test
 
-1. Open the scan screen and select **Demo QR**.
+1. Open the scan screen and select **Fixed QR**.
 2. Display that QR on another device or print it.
 3. Aim the camera at it. The app identifies the category and adds its points automatically.
 4. Alternatively, choose **Scan QR image** and select a saved QR image.
@@ -70,3 +70,7 @@ All six generated category QR patterns were decoded with the real bundled ZXing 
 ## Third-party components
 
 ZXing JavaScript library 0.20.0 is bundled unchanged from `https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js`; see `ZXING-LICENSE.txt` and https://github.com/zxing-js/library. Leaflet is loaded remotely, with map attribution displayed in the app. Original user-supplied branding is retained.
+
+## Fixed QR and fill animation update
+
+Category QR image files and their payloads remain unchanged across visits; existing printed codes still work. Each successful scan animates the result bottle from the previous category total to the new total. Every 50 lifetime category points completes one bottle; overflow fills the next one. Redeeming wallet points does not erase lifetime bottle progress. Reduced-motion browser settings display the final fill immediately. Animation boundaries (empty, partial, full, overflow) are covered by logic checks; animation has not been visually tested on a physical device.

@@ -141,7 +141,7 @@
             <stop offset="100%" stop-color="#66CDB8"/>
           </linearGradient>
         </defs>
-        <rect x="0" y="${fillY}" width="60" height="${96-fillY}" fill="url(#${gradId})" clip-path="url(#${clipId})"/>
+        <g clip-path="url(#${clipId})"><rect class="bottle-liquid" x="0" y="20" width="60" height="76" fill="url(#${gradId})" style="transform:translateY(${fillY-20}px)"/></g>
         <rect x="21" y="6" width="18" height="16" rx="4" fill="none" stroke="rgba(243,236,218,0.35)" stroke-width="2"/>
         <rect x="6" y="18" width="48" height="70" rx="16" fill="none" stroke="rgba(243,236,218,0.35)" stroke-width="2"/>
         <rect x="19" y="2" width="22" height="7" rx="2.5" fill="#FFB44D"/>
@@ -155,8 +155,7 @@
     if(!grid) return;
     grid.innerHTML = categories.map(c=>{
       const earned = categoryEarned(c.id);
-      const fillCap = 50; // points needed to visually show a "full" bottle
-      const pct = Math.max(0, Math.min(100, (earned/fillCap)*100));
+      const pct = bottlePercent(earned);
       return `
         <button class="cat-card" onclick="goScanCategory('${c.id}')">
           <div class="bottle-wrap">${bottleSvg(c.id, pct, c.emoji)}</div>
@@ -164,7 +163,7 @@
             <div class="nm">${c.name}</div>
             <div class="ex">${c.example}</div>
             <div class="pts-badge">+${c.points} pts / item</div>
-            <div class="earned"><b>${earned}</b> pts earned · ${categoryCounts[c.id]} scanned</div>
+            <div class="earned"><b>${earned}</b> pts earned · ${categoryCounts[c.id]} scanned<br>${Math.floor(earned/50)} bottles filled · 50 pts per fill</div>
           </div>
         </button>
       `;
@@ -336,7 +335,7 @@
   function acceptCode(text){
     if(scanLocked) return false;
     const c=categories.find(c=>c.qr===String(text).trim());
-    if(!c){document.getElementById('scan-mismatch').textContent='This is not a supported ReEarn QR. Use the category QR shown under Demo QR; ordinary product barcodes are not registered.';return false;}
+    if(!c){document.getElementById('scan-mismatch').textContent='This is not a supported ReEarn QR. Use the category QR shown under Fixed QR; ordinary product barcodes are not registered.';return false;}
     scanLocked=true; selectedCategoryId=c.id; handleScanSuccess(); return true;
   }
   function scanFrameLoop(session){
@@ -372,10 +371,38 @@
   document.addEventListener('visibilitychange',()=>{if(document.hidden){stopScan();document.getElementById('scan-status').textContent='Camera paused. Tap Start Camera to resume.';}});
   window.addEventListener('pagehide',stopScan);
 
+  // Each 50 lifetime category points fills one progress bottle. Completed
+  // bottles remain counted; the next scan starts filling the next bottle.
+  function bottlePercent(points){ return points>0 && points%50===0 ? 100 : (points%50)*2; }
+  function fillKeyframes(before,after){
+    const start=bottlePercent(before), end=bottlePercent(after);
+    const frame=(pct,offset)=>({transform:'translateY('+(68*(1-pct/100))+'px)',offset});
+    if(start===100) return [frame(0,0),frame(end,1)];
+    if(Math.floor(after/50)>Math.floor(before/50) && after%50!==0){
+      const boundary=(50-before%50)/(after-before);
+      const at=Math.min(.8,Math.max(.2,boundary));
+      return [frame(start,0),frame(100,at),frame(0,Math.min(.95,at+.08)),frame(end,1)];
+    }
+    return [frame(start,0),frame(end,1)];
+  }
+  function animateBottle(c,before,after){
+    const host=document.getElementById('result-bottle');
+    host.innerHTML=bottleSvg('result-'+c.id,bottlePercent(after),c.emoji);
+    host.setAttribute('role','img');
+    host.setAttribute('aria-label',c.name+': '+after+' lifetime points, '+Math.floor(after/50)+' bottles filled');
+    document.getElementById('result-fill-caption').textContent=Math.floor(after/50)+' bottles filled · '+(after%50===0?50:after%50)+'/50 pts';
+    const reduced=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const liquid=host.querySelector('.bottle-liquid');
+    if(!reduced && liquid?.animate){
+      liquid.animate(fillKeyframes(before,after),{duration:1400,easing:'ease-in-out'});
+      document.getElementById('scan-points').animate([{transform:'translateY(12px)',opacity:0},{transform:'translateY(0)',opacity:1}],{duration:550,easing:'ease-out'});
+    }
+  }
   function handleScanSuccess(){
     stopScan();
     const c = getCategory(selectedCategoryId);
     const pts = c.points;
+    const before = categoryEarned(c.id);
     categoryCounts[c.id] = (categoryCounts[c.id]||0) + 1;
     refreshUI();
     addHistoryEntry(c.emoji, c.name + ' scanned', pts);
@@ -385,6 +412,7 @@
     resultEl.style.display = 'block';
     document.getElementById('scan-result-title').textContent = c.name + ' scanned';
     document.getElementById('scan-points').textContent = '+'+pts;
+    animateBottle(c,before,categoryEarned(c.id));
   }
 
   function resetScan(){

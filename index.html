@@ -166,11 +166,11 @@
           <div class="t" id="scan-target-name">Small Beverage Bottle</div>
           <div class="p" id="scan-target-pts">+5 pts / item</div>
         </div>
-        <button class="demo-link" onclick="toggleDemoQr()">Demo QR</button>
+        <button class="demo-link" onclick="toggleDemoQr()">Fixed QR</button>
       </div>
       <div class="demo-qr-box" id="demo-qr-box">
         <div id="demo-qr-canvas"></div>
-        <div class="cap">Open this QR on another screen or print it, then scan it here.</div>
+        <div class="cap">Permanent category QR — unchanged on every visit. Print once or display on another screen, then scan here.</div>
       </div>
 
       <div id="scan-live">
@@ -187,7 +187,7 @@
       </div>
 
       <div class="scan-result" id="scan-result">
-        <div class="star">⭐</div>
+        <div id="result-bottle" class="result-bottle"></div><p id="result-fill-caption" class="fill-caption"></p>
         <div class="rtitle" id="scan-result-title">Bottle scanned</div>
         <div class="rpoints" id="scan-points">+10</div>
         <div class="scan-actions">

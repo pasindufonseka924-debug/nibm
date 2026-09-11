@@ -525,3 +525,5 @@
     body{ background:#04120F; }
   }
 button:disabled{opacity:.55;cursor:wait}.scan-actions{flex-wrap:wrap}.demo-qr-box a{display:block;color:var(--mango);margin-top:10px}#save-notice{font-size:14px;line-height:1.5} .scan-status,.scan-mismatch{font-size:14px} .leaflet-control-attribution{font-size:12px}
+
+.result-bottle{width:112px;height:180px;margin:0 auto 12px}.result-bottle svg{display:block;width:100%;height:100%}.fill-caption{font-size:14px;line-height:1.5;margin:0 0 12px;color:var(--mint)}
