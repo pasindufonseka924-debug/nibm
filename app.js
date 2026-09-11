@@ -199,26 +199,9 @@
   function selectCategory(id){
     if(!getCategory(id)) return;
     selectedCategoryId = id;
-    document.getElementById('demo-qr-box').classList.remove('show');
     const mismatchEl = document.getElementById('scan-mismatch');
     if(mismatchEl) mismatchEl.textContent = '';
     renderScanTarget();
-  }
-
-  // ---------- demo QR (lets you test the flow without a printed sticker) ----------
-  function toggleDemoQr(){
-    const box = document.getElementById('demo-qr-box');
-    const showing = box.classList.toggle('show');
-    if(showing){
-      const canvasEl = document.getElementById('demo-qr-canvas');
-      canvasEl.innerHTML = '';
-      const c = getCategory(selectedCategoryId);
-      const img = document.createElement('img');
-      img.src='./qr-'+c.id+'.svg'; img.alt=c.name+' QR code'; img.width=200; img.height=200;
-      canvasEl.append(img);
-      const link=document.createElement('a'); link.href=img.src; link.download='ReEarn-'+c.id+'.svg'; link.textContent='Download QR';
-      canvasEl.append(link);
-    }
   }
 
   function addHistoryEntry(icon,label,pts){
@@ -302,13 +285,45 @@
     `).join('');
   }
 
-  // Decode individual frames. ZXing 0.20 has no decodeOnceFromVideoElement method.
+  // Both camera and image scans use the same pixel decoding pipeline.
   let codeReader=null, cameraStream=null, scanLoopActive=false, scanLocked=true;
   let scanSession=0, scanTimer=null, cameraOpening=false;
   function getReader(){
-    if(!window.ZXing) throw new Error('QR scanner unavailable. Reload the page.');
-    if(!codeReader){const hints=new Map(); hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,[ZXing.BarcodeFormat.QR_CODE]); hints.set(ZXing.DecodeHintType.TRY_HARDER,true); codeReader=new ZXing.BrowserMultiFormatReader(hints);}
+    if(!window.jsQR && !window.ZXing) throw new Error('Scanner files did not load. Refresh the page and check that all website files were uploaded.');
+    if(!codeReader && window.ZXing) codeReader=new ZXing.MultiFormatReader();
     return codeReader;
+  }
+  function decodeQrPixels(pixels,width,height){
+    if(window.jsQR){
+      const result=window.jsQR(pixels,width,height,{inversionAttempts:'attemptBoth'});
+      if(result?.data)return result.data;
+    }
+    if(window.ZXing){
+      const gray=new Uint8ClampedArray(width*height);
+      for(let i=0;i<gray.length;i++){const p=i*4;gray[i]=(pixels[p]+2*pixels[p+1]+pixels[p+2])/4;}
+      try{
+        const bitmap=new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(new ZXing.RGBLuminanceSource(gray,width,height)));
+        return getReader().decode(bitmap).getText();
+      }catch(e){ /* An undecodable frame is normal. Keep the camera running. */ }
+    }
+    return null;
+  }
+  const decodeCanvas=document.createElement('canvas');
+  let frameNumber=0, frameErrors=0;
+  function decodeSource(source,centerCrop=false){
+    const width=source.videoWidth||source.naturalWidth||source.width;
+    const height=source.videoHeight||source.naturalHeight||source.height;
+    if(!width||!height)return null;
+    const sw=centerCrop?Math.min(width,height)*.7:width;
+    const sh=centerCrop?sw:height;
+    const scale=Math.min(1,1280/Math.max(sw,sh));
+    decodeCanvas.width=Math.max(1,Math.round(sw*scale)); decodeCanvas.height=Math.max(1,Math.round(sh*scale));
+    const context=decodeCanvas.getContext('2d',{willReadFrequently:true});
+    if(!context)throw new Error('Canvas is unavailable');
+    context.fillStyle='#fff'; context.fillRect(0,0,decodeCanvas.width,decodeCanvas.height);
+    context.drawImage(source,(width-sw)/2,(height-sh)/2,sw,sh,0,0,decodeCanvas.width,decodeCanvas.height);
+    const frame=context.getImageData(0,0,decodeCanvas.width,decodeCanvas.height);
+    return decodeQrPixels(frame.data,frame.width,frame.height);
   }
   async function startScan(){
     if(cameraOpening || scanLoopActive) return;
@@ -316,11 +331,13 @@
     const session=scanSession, video=document.getElementById('scan-video'), status=document.getElementById('scan-status');
     if(!window.isSecureContext || !navigator.mediaDevices?.getUserMedia){status.textContent='Camera needs HTTPS and a supported browser. Open the site directly, or scan a QR image.';return;}
     try{getReader();}catch(e){status.textContent=e.message;return;}
-    cameraOpening=true; document.getElementById('camera-start').disabled=true;
+    cameraOpening=true; frameNumber=0; frameErrors=0; document.getElementById('camera-start').disabled=true;
     try{
       const stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}},audio:false});
       if(session!==scanSession){stream.getTracks().forEach(t=>t.stop());return;}
       cameraStream=stream; video.srcObject=stream; await video.play();
+      const track=stream.getVideoTracks?.()[0];
+      if(track?.getCapabilities?.().focusMode?.includes('continuous')) track.applyConstraints({advanced:[{focusMode:'continuous'}]}).catch(()=>{});
       if(session!==scanSession)return;
       scanLocked=false; scanLoopActive=true;
       status.textContent='Point at a ReEarn QR. Points are added automatically.';
@@ -335,17 +352,24 @@
   function acceptCode(text){
     if(scanLocked) return false;
     const c=categories.find(c=>c.qr===String(text).trim());
-    if(!c){document.getElementById('scan-mismatch').textContent='This is not a supported ReEarn QR. Use the category QR shown under Fixed QR; ordinary product barcodes are not registered.';return false;}
+    if(!c){document.getElementById('scan-mismatch').textContent='This is not a supported ReEarn QR. Use a labeled ReEarn bottle QR from your separate printed sheet. Ordinary product barcodes are not registered.';return false;}
     scanLocked=true; selectedCategoryId=c.id; handleScanSuccess(); return true;
   }
   function scanFrameLoop(session){
     if(session!==scanSession || !scanLoopActive || scanLocked)return;
     const video=document.getElementById('scan-video');
     if(video.readyState>=2 && video.videoWidth){
-      try{ const result=getReader().decode(video); if(acceptCode(result.getText()))return; }
-      catch(e){if(!['NotFoundException','ChecksumException','FormatException'].includes(e.constructor?.name) && !(e instanceof ZXing.NotFoundException) && !(e instanceof ZXing.ChecksumException) && !(e instanceof ZXing.FormatException)){stopScan();document.getElementById('scan-status').textContent='Scanner error. Restart camera or scan a QR image.';return;}}
+      try{
+        const text=decodeSource(video,frameNumber++%3===2);
+        frameErrors=0;
+        if(text && acceptCode(text))return;
+      }catch(e){
+        frameErrors++;
+        if(frameErrors>=8){stopScan();document.getElementById('scan-status').textContent='Camera frames could not be read. Open this page directly in Chrome or Safari, or choose Scan QR image.';return;}
+      }
+      if(frameNumber===45) document.getElementById('scan-status').textContent='Still looking: hold one QR steady, improve lighting, and move closer. You can also choose Scan QR image.';
     }
-    scanTimer=setTimeout(()=>scanFrameLoop(session),120);
+    scanTimer=setTimeout(()=>scanFrameLoop(session),140);
   }
   function stopScan(){
     scanSession++; scanLocked=true; scanLoopActive=false; cameraOpening=false;
@@ -363,8 +387,11 @@
     try{
       const img=new Image(); img.src=url; await img.decode();
       if(session!==scanSession)return;
-      const result=getReader().decode(img); scanLocked=false;
-      if(!acceptCode(result.getText()))status.textContent='Choose another image or start the camera.';
+      getReader();
+      const text=decodeSource(img)||decodeSource(img,true);
+      if(!text)throw new Error('No readable QR');
+      scanLocked=false;
+      if(!acceptCode(text))status.textContent='Choose another image or start the camera.';
     }catch(e){if(session===scanSession)status.textContent='No readable QR found. Choose a clear, uncropped QR image or start the camera.';}
     finally{URL.revokeObjectURL(url);input.value='';}
   }

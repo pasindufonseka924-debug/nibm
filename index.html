@@ -9,6 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="./jsQR.js"></script>
 <script src="./zxing.min.js"></script>
 
 <link rel="stylesheet" href="./styles.css">
@@ -166,13 +167,10 @@
           <div class="t" id="scan-target-name">Small Beverage Bottle</div>
           <div class="p" id="scan-target-pts">+5 pts / item</div>
         </div>
-        <button class="demo-link" onclick="toggleDemoQr()">Fixed QR</button>
-      </div>
-      <div class="demo-qr-box" id="demo-qr-box">
-        <div id="demo-qr-canvas"></div>
-        <div class="cap">Permanent category QR — unchanged on every visit. Print once or display on another screen, then scan here.</div>
       </div>
 
+
+      <p class="scan-help">Scan one bottle QR from your printed sheet. The bottle type is detected automatically. Keep the whole QR and its white border in view.</p>
       <div id="scan-live">
         <div class="scan-frame">
           <video id="scan-video" muted playsinline autoplay></video>
