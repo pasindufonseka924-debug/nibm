@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="https://unpkg.com/@zxing/library@0.20.0/umd/index.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   :root{
     --lagoon-deep:#0A2C29;
@@ -198,6 +199,76 @@
   }
   .tile .ic svg{ width:20px; height:20px; }
   .tile .t{ font-size:12.5px; font-weight:600; line-height:1.3; }
+
+  /* ---------- Category grid ---------- */
+  .cat-grid{
+    display:grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap:10px;
+  }
+  .cat-card{
+    background:var(--lagoon-panel);
+    border:1px solid var(--line);
+    border-radius:18px;
+    padding:12px;
+    text-align:left;
+    display:flex; align-items:center; gap:12px;
+    transition: transform .15s ease, background .15s ease;
+  }
+  .cat-card:active{ transform:scale(0.97); background:var(--lagoon-panel-2); }
+  .cat-card .bottle-wrap{ flex:none; width:54px; }
+  .cat-card .bottle-wrap svg{ width:100%; height:auto; display:block; }
+  .cat-card .cap-emoji{
+    position:absolute; font-size:14px; top:-2px; left:50%; transform:translateX(-50%);
+  }
+  .cat-card .info-col{ flex:1; min-width:0; display:flex; flex-direction:column; gap:5px; }
+  .cat-card .nm{ font-size:12.5px; font-weight:600; line-height:1.25; }
+  .cat-card .ex{ font-size:10.5px; color:var(--sand-dim); }
+  .cat-card .pts-badge{
+    align-self:flex-start;
+    font-size:11px; font-weight:700; color:var(--mango);
+    background:rgba(255,180,77,0.14);
+    padding:3px 8px; border-radius:99px;
+  }
+  .cat-card .earned{ font-size:10.5px; color:var(--sand-dim); }
+  .cat-card .earned b{ color:var(--sand); font-weight:600; }
+
+  /* ---------- Scan: category chips + demo QR ---------- */
+  .cat-chip-row{
+    display:flex; gap:8px; overflow-x:auto; padding-bottom:4px; margin-top:8px;
+  }
+  .cat-chip{
+    flex:none; display:flex; align-items:center; gap:6px;
+    background:var(--lagoon-panel); border:1px solid var(--line);
+    border-radius:99px; padding:8px 12px;
+    font-size:12px; font-weight:600; color:var(--sand-dim);
+  }
+  .cat-chip.on{ border-color:var(--teal); color:var(--teal-soft); background:rgba(31,161,135,0.14); }
+  .scan-target{
+    display:flex; align-items:center; gap:10px;
+    background:var(--lagoon-panel); border:1px solid var(--line);
+    border-radius:16px; padding:12px 14px; margin-top:12px;
+  }
+  .scan-target .emoji{ font-size:24px; flex:none; }
+  .scan-target .info .t{ font-size:13px; font-weight:600; }
+  .scan-target .info .p{ font-size:11.5px; color:var(--mango); font-weight:600; margin-top:1px; }
+  .scan-target .demo-link{
+    margin-left:auto; flex:none; font-size:11px; font-weight:600;
+    color:var(--teal-soft); background:rgba(31,161,135,0.14);
+    padding:6px 10px; border-radius:99px; border:none;
+  }
+  .demo-qr-box{
+    display:none;
+    margin-top:10px; text-align:center;
+    background:var(--sand); border-radius:16px; padding:16px;
+  }
+  .demo-qr-box.show{ display:block; }
+  .demo-qr-box #demo-qr-canvas{ display:inline-block; }
+  .demo-qr-box .cap{ font-size:11px; color:#3A2400; margin-top:8px; font-weight:600; }
+  .scan-mismatch{
+    text-align:center; font-size:12px; color:var(--coral); font-weight:600;
+    margin-top:8px; min-height:16px;
+  }
 
   .how-list{ display:flex; flex-direction:column; gap:10px; }
   .how-item{
@@ -486,34 +557,16 @@
       <div class="card-token">
         <div class="label">Your points balance</div>
         <div class="amount" id="pts-home">340 <span>points</span></div>
-        <div class="sub" id="pts-home-sub"><b style="color:var(--mango)">160</b> points to go until 10% off</div>
+        <div class="sub" id="pts-home-sub">points to go until the next voucher</div>
         <div class="progress-track"><div class="progress-fill" id="progress-home" style="width:68%"></div></div>
-        <div class="progress-meta"><span>250 · 5% unlocked</span><span><b>500</b> · 10%</span></div>
+        <div class="progress-meta" id="progress-meta-home"><span>0</span><span id="progress-meta-home-max">50 · Rs.25</span></div>
       </div>
 
       <div class="section-title">
-        <h2>What you can do</h2>
+        <h2>Bottle categories</h2>
+        <span class="hint">Tap a bottle to scan</span>
       </div>
-      <div class="tile-row">
-        <button class="tile" onclick="showScreen('scan')">
-          <div class="ic">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#66CDB8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="12" rx="2"/><path d="M7 7V5a1 1 0 0 1 1-1h1"/><path d="M17 7V5a1 1 0 0 0-1-1h-1"/><path d="M7 19v0a1 1 0 0 0 1 1h1"/><path d="M17 19v0a1 1 0 0 1-1 1h-1"/><circle cx="12" cy="13" r="3"/></svg>
-          </div>
-          <div class="t">Scan<br>Bottle</div>
-        </button>
-        <button class="tile" onclick="showScreen('map')">
-          <div class="ic">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#66CDB8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20l-6-3V4l6 3 6-3 6 3v13l-6-3-6 3z"/><path d="M9 4v13"/><path d="M15 7v13"/></svg>
-          </div>
-          <div class="t">View<br>Map</div>
-        </button>
-        <button class="tile" onclick="showScreen('wallet')">
-          <div class="ic">
-            <svg viewBox="0 0 24 24" fill="none" stroke="#66CDB8" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/><circle cx="16" cy="14.5" r="1.2" fill="#66CDB8" stroke="none"/></svg>
-          </div>
-          <div class="t">My<br>Wallet</div>
-        </button>
-      </div>
+      <div class="cat-grid" id="cat-grid"></div>
 
       <div class="section-title">
         <h2>How it works</h2>
@@ -521,15 +574,15 @@
       <div class="how-list">
         <div class="how-item">
           <div class="n">1</div>
-          <p>Return the <b>plastic bottle</b> you bought at any participating shop.</p>
+          <p>Pick the <b>bottle type</b> you're returning from the categories above.</p>
         </div>
         <div class="how-item">
           <div class="n">2</div>
-          <p>Scan the bottle's barcode / QR in the app to add <b>points</b> to your account instantly.</p>
+          <p>Scan that bottle's <b>dedicated QR code</b> to add its exact points instantly.</p>
         </div>
         <div class="how-item">
           <div class="n">3</div>
-          <p>Once you've earned enough points, redeem them for a discount on new products from the <b>same brand</b>.</p>
+          <p>Collect enough points and redeem them for a <b>discount voucher</b> in your wallet.</p>
         </div>
       </div>
     </section>
@@ -549,33 +602,41 @@
       <div class="card-token" style="margin-top:14px;">
         <div class="label">Wallet balance</div>
         <div class="amount" id="pts-wallet">340 <span>points</span></div>
-        <div class="sub">You typically earn 10 points per bottle scanned</div>
+        <div class="sub">Points earned depend on the bottle category you scan</div>
         <div class="progress-track"><div class="progress-fill" id="progress-wallet" style="width:68%"></div></div>
-        <div class="progress-meta"><span>250 · 5%</span><span><b>500</b> · 10%</span></div>
+        <div class="progress-meta" id="progress-meta-wallet"><span>0</span><span id="progress-meta-wallet-max">50 · Rs.25</span></div>
       </div>
 
-      <div class="section-title"><h2>Your discounts</h2></div>
-      <div class="coupon unlocked" id="coupon-5">
-        <div class="pct">5%</div>
+      <div class="section-title"><h2>Your rewards</h2></div>
+      <div class="coupon locked" id="coupon-50">
+        <div class="pct" style="font-size:16px;">Rs.25</div>
         <div class="txt">
-          <div class="t">Off a new bottled water pack</div>
-          <div class="s">Unlocked at 250 points</div>
-        </div>
-        <div class="status">USE NOW</div>
-      </div>
-      <div class="coupon locked" id="coupon-10">
-        <div class="pct">10%</div>
-        <div class="txt">
-          <div class="t">Off any product from the same brand</div>
-          <div class="s">160 more points to unlock</div>
+          <div class="t">Discount voucher</div>
+          <div class="s">50 points needed</div>
         </div>
         <div class="status">LOCKED</div>
       </div>
-      <div class="coupon locked" id="coupon-20">
-        <div class="pct">20%</div>
+      <div class="coupon locked" id="coupon-100">
+        <div class="pct" style="font-size:16px;">Rs.60</div>
         <div class="txt">
-          <div class="t">Off a refill pack + bottle bundle</div>
-          <div class="s">Unlocks at 1000 points</div>
+          <div class="t">Discount voucher</div>
+          <div class="s">100 points needed</div>
+        </div>
+        <div class="status">LOCKED</div>
+      </div>
+      <div class="coupon locked" id="coupon-200">
+        <div class="pct" style="font-size:16px;">Rs.150</div>
+        <div class="txt">
+          <div class="t">Discount voucher</div>
+          <div class="s">200 points needed</div>
+        </div>
+        <div class="status">LOCKED</div>
+      </div>
+      <div class="coupon locked" id="coupon-500">
+        <div class="pct" style="font-size:16px;">Rs.400</div>
+        <div class="txt">
+          <div class="t">Discount voucher</div>
+          <div class="s">500 points needed</div>
         </div>
         <div class="status">LOCKED</div>
       </div>
@@ -593,10 +654,10 @@
         <div class="history-row">
           <div class="ic">🏷️</div>
           <div>
-            <div class="t">5% discount used</div>
+            <div class="t">Rs.25 voucher redeemed</div>
             <div class="d">2 days ago</div>
           </div>
-          <div class="pt" style="color:var(--coral)">−250</div>
+          <div class="pt" style="color:var(--coral)">−50</div>
         </div>
         <div class="history-row">
           <div class="ic">♻️</div>
@@ -623,6 +684,21 @@
         <h2>Scan a bottle</h2>
       </div>
 
+      <div class="cat-chip-row" id="cat-chip-row"></div>
+
+      <div class="scan-target" id="scan-target">
+        <div class="emoji" id="scan-target-emoji">🥤</div>
+        <div class="info">
+          <div class="t" id="scan-target-name">Small Beverage Bottle</div>
+          <div class="p" id="scan-target-pts">+5 pts / item</div>
+        </div>
+        <button class="demo-link" onclick="toggleDemoQr()">Demo QR</button>
+      </div>
+      <div class="demo-qr-box" id="demo-qr-box">
+        <div id="demo-qr-canvas"></div>
+        <div class="cap">Scan this with the camera below to test this bottle's QR</div>
+      </div>
+
       <div id="scan-live">
         <div class="scan-frame">
           <video id="scan-video" muted playsinline autoplay></video>
@@ -630,6 +706,7 @@
           <div class="scanline"></div>
         </div>
         <div class="scan-status" id="scan-status">Opening camera…</div>
+        <div class="scan-mismatch" id="scan-mismatch"></div>
         <div class="scan-actions">
           <button class="btn-mango" onclick="startScan()">Start Camera</button>
         </div>
@@ -637,7 +714,7 @@
 
       <div class="scan-result" id="scan-result">
         <div class="star">⭐</div>
-        <div class="rtitle">Bottle scanned</div>
+        <div class="rtitle" id="scan-result-title">Bottle scanned</div>
         <div class="rpoints" id="scan-points">+10</div>
         <div class="scan-actions">
           <button class="btn-mango" onclick="resetScan(); startScan();">Scan another</button>
@@ -697,8 +774,31 @@
 </div>
 
 <script>
+  // ---------- bottle categories: each has its own dedicated QR code ----------
+  const categories = [
+    { id:'small',     emoji:'🥤', name:'Small Beverage Bottle', example:'250–750 ml',        points:5,  qr:'REEARN-SMALL-BEV' },
+    { id:'large',     emoji:'🥤', name:'Large Beverage Bottle', example:'1 L–2.5 L',          points:10, qr:'REEARN-LARGE-BEV' },
+    { id:'personal',  emoji:'🧴', name:'Personal Care Bottle',  example:'Shampoo, lotion',    points:8,  qr:'REEARN-PERSONAL-CARE' },
+    { id:'household', emoji:'🧽', name:'Household Bottle',      example:'Detergent, dishwash',points:10, qr:'REEARN-HOUSEHOLD' },
+    { id:'can',       emoji:'🥫', name:'Can',                   example:'Aluminium/steel can',points:8,  qr:'REEARN-CAN' },
+    { id:'other',     emoji:'🫙', name:'Other Plastic Container',example:'Jars, etc.',        points:5,  qr:'REEARN-OTHER-PLASTIC' },
+  ];
+
+  // reward tiers (points needed -> Rs discount)
+  const rewardTiers = [
+    { pts:50,  rs:25,  id:'coupon-50' },
+    { pts:100, rs:60,  id:'coupon-100' },
+    { pts:200, rs:150, id:'coupon-200' },
+    { pts:500, rs:400, id:'coupon-500' },
+  ];
+
   // ---------- state ----------
-  let balance = 340;
+  const categoryCounts = { small:2, large:1, personal:3, household:1, can:0, other:0 }; // seed demo counts
+  let selectedCategoryId = categories[0].id;
+  function getCategory(id){ return categories.find(c=>c.id===id); }
+  function categoryEarned(id){ const c = getCategory(id); return categoryCounts[id] * c.points; }
+  function computeBalance(){ return categories.reduce((sum,c)=> sum + categoryEarned(c.id), 0); }
+  let balance = computeBalance();
 
   // ---------- screen switching ----------
   let mapInited = false;
@@ -717,6 +817,7 @@
       setTimeout(()=>{ if(window._leafletMap) window._leafletMap.invalidateSize(); }, 80);
     }
     if(name==='scan'){
+      renderScanTarget();
       resetScan();
       startScan();
     } else {
@@ -731,23 +832,35 @@
 
   // ---------- points / UI refresh ----------
   function refreshUI(){
+    balance = computeBalance();
     document.getElementById('pts-topbar').textContent = balance;
     document.getElementById('pts-home').innerHTML = balance + ' <span>points</span>';
     document.getElementById('pts-wallet').innerHTML = balance + ' <span>points</span>';
     document.getElementById('pts-lb').textContent = balance;
 
-    const pct500 = Math.max(0, Math.min(100, (balance/500)*100));
-    document.getElementById('progress-home').style.width = pct500 + '%';
-    document.getElementById('progress-wallet').style.width = pct500 + '%';
+    const nextTier = rewardTiers.find(t=>balance < t.pts);
+    const pctNext = nextTier ? Math.max(0, Math.min(100, (balance/nextTier.pts)*100)) : 100;
+    document.getElementById('progress-home').style.width = pctNext + '%';
+    document.getElementById('progress-wallet').style.width = pctNext + '%';
 
-    if(balance >= 500){
-      document.getElementById('pts-home-sub').innerHTML = 'You\'ve unlocked the <b style="color:var(--mango)">10% off</b> coupon';
+    if(nextTier){
+      document.getElementById('pts-home-sub').innerHTML = '<b style="color:var(--mango)">'+(nextTier.pts-balance)+'</b> points to go until the Rs.'+nextTier.rs+' voucher';
+      document.getElementById('progress-meta-home-max').textContent = nextTier.pts+' · Rs.'+nextTier.rs;
+      document.getElementById('progress-meta-wallet-max').textContent = nextTier.pts+' · Rs.'+nextTier.rs;
     } else {
-      document.getElementById('pts-home-sub').innerHTML = '<b style="color:var(--mango)">'+(500-balance)+'</b> points to go until 10% off';
+      document.getElementById('pts-home-sub').innerHTML = 'All reward tiers <b style="color:var(--mango)">unlocked</b>!';
+      document.getElementById('progress-meta-home-max').textContent = 'Max tier reached';
+      document.getElementById('progress-meta-wallet-max').textContent = 'Max tier reached';
     }
+    document.querySelector('#progress-meta-home span:first-child').textContent = balance;
+    document.querySelector('#progress-meta-wallet span:first-child').textContent = balance;
 
-    setCoupon('coupon-10', balance>=500, (500-balance)+' more points to unlock', '10% off any product from the same brand');
-    setCoupon('coupon-20', balance>=1000, (1000-balance)+' more points to unlock', '20% off a refill pack + bottle bundle');
+    rewardTiers.forEach(t=>{
+      setCoupon(t.id, balance>=t.pts, (t.pts-balance)+' points needed', 'Unlocked · ready to redeem');
+    });
+
+    renderCategoryGrid();
+    renderScanTarget();
   }
 
   function setCoupon(id, unlocked, lockedText, unlockedText){
@@ -756,15 +869,116 @@
     el.classList.toggle('unlocked', unlocked);
     el.classList.toggle('locked', !unlocked);
     el.querySelector('.status').textContent = unlocked ? 'USE NOW' : 'LOCKED';
-    el.querySelector('.s').textContent = unlocked ? unlockedText.replace(/^\d+% /,'Unlocked · ') : lockedText;
+    el.querySelector('.s').textContent = unlocked ? unlockedText : lockedText;
   }
 
-  function addHistoryEntry(label, pts){
+  // ---------- category grid (home) ----------
+  function bottleSvg(id, pct, emoji){
+    const clipId = 'clip-' + id;
+    const gradId = 'grad-' + id;
+    // liquid rises within the bottle body (y 20 to 88); clamp so it never overflows the neck
+    const bodyTop = 20, bodyBottom = 88;
+    const fillY = bodyBottom - (Math.max(0, Math.min(100, pct)) / 100) * (bodyBottom - bodyTop);
+    return `
+      <svg viewBox="0 0 60 96" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <clipPath id="${clipId}">
+            <rect x="21" y="6" width="18" height="16" rx="4"/>
+            <rect x="6" y="18" width="48" height="70" rx="16"/>
+          </clipPath>
+          <linearGradient id="${gradId}" x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0%" stop-color="#1FA187"/>
+            <stop offset="100%" stop-color="#66CDB8"/>
+          </linearGradient>
+        </defs>
+        <rect x="0" y="${fillY}" width="60" height="${96-fillY}" fill="url(#${gradId})" clip-path="url(#${clipId})"/>
+        <rect x="21" y="6" width="18" height="16" rx="4" fill="none" stroke="rgba(243,236,218,0.35)" stroke-width="2"/>
+        <rect x="6" y="18" width="48" height="70" rx="16" fill="none" stroke="rgba(243,236,218,0.35)" stroke-width="2"/>
+        <rect x="19" y="2" width="22" height="7" rx="2.5" fill="#FFB44D"/>
+        <text x="30" y="55" text-anchor="middle" font-size="22">${emoji}</text>
+      </svg>
+    `;
+  }
+
+  function renderCategoryGrid(){
+    const grid = document.getElementById('cat-grid');
+    if(!grid) return;
+    grid.innerHTML = categories.map(c=>{
+      const earned = categoryEarned(c.id);
+      const fillCap = 50; // points needed to visually show a "full" bottle
+      const pct = Math.max(0, Math.min(100, (earned/fillCap)*100));
+      return `
+        <button class="cat-card" onclick="goScanCategory('${c.id}')">
+          <div class="bottle-wrap">${bottleSvg(c.id, pct, c.emoji)}</div>
+          <div class="info-col">
+            <div class="nm">${c.name}</div>
+            <div class="ex">${c.example}</div>
+            <div class="pts-badge">+${c.points} pts / item</div>
+            <div class="earned"><b>${earned}</b> pts earned · ${categoryCounts[c.id]} scanned</div>
+          </div>
+        </button>
+      `;
+    }).join('');
+  }
+
+  function goScanCategory(id){
+    selectedCategoryId = id;
+    showScreen('scan');
+  }
+
+  // ---------- category chips + target (scan screen) ----------
+  function renderCatChips(){
+    const row = document.getElementById('cat-chip-row');
+    if(!row) return;
+    row.innerHTML = categories.map(c=>`
+      <button class="cat-chip ${c.id===selectedCategoryId?'on':''}" onclick="selectCategory('${c.id}')">${c.emoji} ${c.name}</button>
+    `).join('');
+  }
+
+  function renderScanTarget(){
+    const c = getCategory(selectedCategoryId);
+    if(!c) return;
+    const emojiEl = document.getElementById('scan-target-emoji');
+    const nameEl = document.getElementById('scan-target-name');
+    const ptsEl = document.getElementById('scan-target-pts');
+    if(emojiEl) emojiEl.textContent = c.emoji;
+    if(nameEl) nameEl.textContent = c.name;
+    if(ptsEl) ptsEl.textContent = '+'+c.points+' pts / item';
+    renderCatChips();
+  }
+
+  function selectCategory(id){
+    selectedCategoryId = id;
+    document.getElementById('demo-qr-box').classList.remove('show');
+    const mismatchEl = document.getElementById('scan-mismatch');
+    if(mismatchEl) mismatchEl.textContent = '';
+    renderScanTarget();
+  }
+
+  // ---------- demo QR (lets you test the flow without a printed sticker) ----------
+  function toggleDemoQr(){
+    const box = document.getElementById('demo-qr-box');
+    const showing = box.classList.toggle('show');
+    if(showing){
+      const canvasEl = document.getElementById('demo-qr-canvas');
+      canvasEl.innerHTML = '';
+      const c = getCategory(selectedCategoryId);
+      new QRCode(canvasEl, {
+        text: c.qr,
+        width: 150,
+        height: 150,
+        colorDark: '#0A2C29',
+        colorLight: '#F3ECDA'
+      });
+    }
+  }
+
+  function addHistoryEntry(icon, label, pts){
     const list = document.getElementById('history-list');
     const row = document.createElement('div');
     row.className = 'history-row';
     row.innerHTML = `
-      <div class="ic">♻️</div>
+      <div class="ic">${icon}</div>
       <div>
         <div class="t">${label}</div>
         <div class="d">Scanned just now</div>
@@ -842,12 +1056,19 @@
         video,
         (result, err) => {
           if(result && !scanLocked){
-            scanLocked = true;
-            handleScanSuccess();
+            const text = (result.getText ? result.getText() : '').trim();
+            const c = getCategory(selectedCategoryId);
+            const mismatchEl = document.getElementById('scan-mismatch');
+            if(text === c.qr){
+              scanLocked = true;
+              handleScanSuccess();
+            } else {
+              if(mismatchEl) mismatchEl.textContent = "That QR doesn't match this bottle type — pick the right category or scan its own QR";
+            }
           }
         }
       );
-      statusEl.textContent = 'Point the camera at the bottle\'s barcode or QR';
+      statusEl.textContent = 'Point the camera at this bottle\'s dedicated QR code';
     }catch(e){
       statusEl.textContent = 'Camera access denied — check camera permissions and try again';
     }
@@ -864,14 +1085,16 @@
 
   function handleScanSuccess(){
     stopScan();
-    const pts = 10;
-    balance += pts;
+    const c = getCategory(selectedCategoryId);
+    const pts = c.points;
+    categoryCounts[c.id] = (categoryCounts[c.id]||0) + 1;
     refreshUI();
-    addHistoryEntry('Bottle scanned', pts);
+    addHistoryEntry(c.emoji, c.name + ' scanned', pts);
 
     document.getElementById('scan-live').style.display = 'none';
     const resultEl = document.getElementById('scan-result');
     resultEl.style.display = 'block';
+    document.getElementById('scan-result-title').textContent = c.name + ' scanned';
     document.getElementById('scan-points').textContent = '+'+pts;
   }
 
@@ -879,6 +1102,8 @@
     document.getElementById('scan-result').style.display = 'none';
     document.getElementById('scan-live').style.display = 'block';
     document.getElementById('scan-status').textContent = 'Opening camera…';
+    const mismatchEl = document.getElementById('scan-mismatch');
+    if(mismatchEl) mismatchEl.textContent = '';
   }
 
   refreshUI();
